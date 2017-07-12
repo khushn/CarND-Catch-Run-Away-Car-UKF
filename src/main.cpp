@@ -3,6 +3,7 @@
 #include "json.hpp"
 #include <math.h>
 #include "ukf.h"
+#include "circle_geom.h"
 
 using namespace std;
 
@@ -112,15 +113,38 @@ int main()
     	  while (heading_to_target > M_PI) heading_to_target-=2.*M_PI; 
     	  while (heading_to_target <-M_PI) heading_to_target+=2.*M_PI;
     	  //turn towards the target
-    	  double heading_difference = heading_to_target - hunter_heading;
-    	  while (heading_difference > M_PI) heading_difference-=2.*M_PI; 
-    	  while (heading_difference <-M_PI) heading_difference+=2.*M_PI;
+    	  //double heading_difference = heading_to_target - hunter_heading;
+    	  //while (heading_difference > M_PI) heading_difference-=2.*M_PI; 
+    	  //while (heading_difference <-M_PI) heading_difference+=2.*M_PI;
 
     	  double distance_difference = sqrt((target_y - hunter_y)*(target_y - hunter_y) + (target_x - hunter_x)*(target_x - hunter_x));
 
+        // calculate howmuch to turn and distance to travel
+        CircleGeom cg = CircleGeom(ukf.x_);        
+        cout << "circle radius: " << cg.radius_ << "; speed: " << cg.speed_ << "; cx: " << cg.cx_ << "; cy: " << cg.cy_ << endl;
+
+        double turn;
+        double dist;
+        double tret = cg.tell_me_circle(hunter_x, hunter_y, &turn, &dist); 
+
+
+         //turn towards the target
+        double heading_difference = turn - hunter_heading;
+        while (heading_difference > M_PI) heading_difference-=2.*M_PI; 
+        while (heading_difference <-M_PI) heading_difference+=2.*M_PI;
+
+        //cout << "turn: " << heading_difference << "; dist: " << distance_difference << endl;
+        cout << "tret: " << tret << "; turn: " << heading_difference << "; dist: " << dist << endl;
+
+        if (dist < 0.1) {
+          // don't make unncessary moves
+          dist = 0.;
+          heading_difference = 0.;
+        }
+       
           json msgJson;
           msgJson["turn"] = heading_difference;
-          msgJson["dist"] = distance_difference; 
+          msgJson["dist"] = dist; 
           auto msg = "42[\"move_hunter\"," + msgJson.dump() + "]";
           // std::cout << msg << std::endl;
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);

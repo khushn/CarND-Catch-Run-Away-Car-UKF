@@ -7,6 +7,8 @@
 #include <string>
 #include <fstream>
 
+using namespace std;
+
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
 
@@ -27,6 +29,12 @@ public:
 
   ///* state covariance matrix
   MatrixXd P_;
+
+  // Laser mesauremunt noise
+  MatrixXd R_laser_;
+
+  // Laser H matrix
+  MatrixXd H_laser_;
 
   ///* predicted sigma points matrix
   MatrixXd Xsig_pred_;
@@ -68,6 +76,10 @@ public:
   double lambda_;
 
 
+  // NIS stores at each step
+  double nis_laser_;
+  double nis_radar_;
+
   /**
    * Constructor
    */
@@ -102,6 +114,27 @@ public:
    * @param meas_package The measurement at k+1
    */
   void UpdateRadar(MeasurementPackage meas_package);
+
+private: 
+
+  // Get the augmented sigma points
+  // NOTE: We don't need a separate function for sigma point generation
+  // this function does generation of all the points 
+  void AugmentedSigmaPoints(MatrixXd* Xsig_out);
+
+  void SigmaPointPrediction(double delta_t, MatrixXd& Xsig_aug, MatrixXd* Xsig_out);
+
+  void PredictMeanAndCovariance(VectorXd* x_pred, MatrixXd* P_pred);
+
+  // This is to transform our state prediction, to a form which is got by radar, 
+  // so that radar update is easy
+  void PredictRadarMeasurement(MatrixXd* ZSig, VectorXd* z_out, MatrixXd* S_out);
+
+  void UpdateRadarState(MatrixXd& Zsig, VectorXd& z_pred, MatrixXd& S, VectorXd& z);
+
+  double calculateNIS(VectorXd z, VectorXd z_pred, MatrixXd S);
+
+  ofstream ofile_;
 };
 
 #endif /* UKF_H */
