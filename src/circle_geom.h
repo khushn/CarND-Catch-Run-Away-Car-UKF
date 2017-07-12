@@ -32,7 +32,7 @@ public:
 	virtual ~CircleGeom();
 
 	/**
-	   Dear Cicle, 
+	   Dear Circle, 
 	    kindly tell me, which point in future should I target, 
 	   - Given my max speed is same as yours
 	   - Thy now know youreself
